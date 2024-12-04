@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "Shader/shader.h"
   
+Shader::Shader(){}
 
 Shader::Shader(const char* vertexName, const char* fragmentName)
 {

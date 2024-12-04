@@ -3,7 +3,7 @@
 #include <bitset>
 #include <glad/glad.h>
 
-bool tgaLoader::load(const char* path, bool flip)
+bool tgaLoader::load(const char* path, bool srgb, bool flip)
 {
     FILE* tgaFile;
     tgaFile = fopen(path, "rb");
@@ -19,7 +19,7 @@ bool tgaLoader::load(const char* path, bool flip)
         std::cout << header[2] << std::endl;
         return false;
     }
-    if(!loadHeader(path, tgaFile)) return false;
+    if(!loadHeader(path, tgaFile, srgb)) return false;
     if(memcmp(header, uncompressedHeader, sizeof(uncompressedHeader)) == 0)
     {
         return loadUncompressed(path, tgaFile, flip);
@@ -59,7 +59,7 @@ bool tgaLoader::loadCompressed(const char* path, FILE* tgaFile, bool flip)
 {
     return true;
 }
-bool tgaLoader::loadHeader(const char* path, FILE* tgaFile)
+bool tgaLoader::loadHeader(const char* path, FILE* tgaFile, bool srgb)
 {
     unsigned char headerFinal[6];
     if(fread(headerFinal, 1, 6, tgaFile) == 0)
@@ -75,8 +75,32 @@ bool tgaLoader::loadHeader(const char* path, FILE* tgaFile)
         std::cout << "TGA CONSTRUCTS NOT VALID" << std::endl;
         return false;
     }
-    if(bpp == 24) type = GL_RGB;
-    else type = GL_RGBA;
+    if(!srgb)
+    {
+        if(bpp == 24) 
+        {
+            type = GL_RGB;
+            internalType = GL_RGB;
+        }
+        else 
+        {
+            type = GL_RGBA;
+            internalType = GL_RGBA;
+        }
+    }
+    else
+    {
+        if(bpp == 24) 
+        {
+            type = GL_RGB;
+            internalType = GL_SRGB;
+        }
+        else 
+        {
+            type = GL_RGBA;
+            internalType = GL_SRGB_ALPHA;
+        }
+    }
     bytesPerPixel = bpp / 8;
     imageSize = bytesPerPixel * width * height;
     return true;

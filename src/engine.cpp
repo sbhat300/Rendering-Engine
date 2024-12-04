@@ -41,7 +41,7 @@ bool firstMouse = true;
 flyCam cam(glm::vec3(0, 0, 3));
 tgaLoader imgLoader;
 bool sharedData::windows = true;
-float setup::ambient = 0.05f;
+float setup::ambient = 0.00f;
 
 lightManager lights;
 
@@ -106,8 +106,13 @@ int main() {
     Shader screenShader("screenVertex", "screenFragment");
 
     display.setShader(&screenShader);
+    //Post procssing options
+    // display.addInversion();
+    // display.addBlackWhite();
+    // display.addSharpen();
+    // display.addBlur();
 
-    pointLight temp(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.09f, 0.032f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+    pointLight temp(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.7f, 1.8f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
     temp.shouldRender = true;
     temp.scale = glm::vec3(0.2f, 0.2f, 0.2f);
     temp.setShader(&lightShader);
@@ -117,8 +122,6 @@ int main() {
     temp.pos = glm::vec3(1.0f, 0.0f, -3.0f);
     temp.diffuseColor = glm::vec3(0.0f, 0.5f, 0.5f);
     temp.specularColor = glm::vec3(0.0f, 1.0f, 1.0f);
-    temp.linear = 0.045f;
-    temp.quadratic = 0.0075f;
     lights.pointLights.push_back(temp);
     directionLight temp2(glm::vec3(-0.2f, -0.5f, 0.0f), glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.2f, 0.2f, 0.2f));
     lights.directionLights.push_back(temp2);
@@ -142,10 +145,10 @@ int main() {
     c[0].setShader(&cubeShader, 255, 127, 0);
     c[0].pos = glm::vec3(0, -2, 0);
     c[0].scale = glm::vec3(10, 1, 10);
-    c[0].shininess = 32;
+    c[0].shininess = 16;
     c[4].setEmissionTexture("container_emission");
 
-    sky.load("space_right", "space_left", "space_top", "space_bottom", "space_front", "space_back");
+    sky.load("ocean_right", "ocean_left", "ocean_top", "ocean_bottom", "ocean_front", "ocean_back");
     sky.setShader(&skyboxShader);
 
     //UBO must be set after shaders are set

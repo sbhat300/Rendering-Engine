@@ -35,7 +35,7 @@ void cube::setShader(Shader* s, unsigned char defaultDiffuse, unsigned char defa
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     unsigned char temp[3] = {defaultDiffuse, defaultDiffuse, defaultDiffuse};
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp);
 
     glGenTextures(1, &specTex);
     glBindTexture(GL_TEXTURE_2D, specTex);
@@ -53,7 +53,7 @@ void cube::setShader(Shader* s, unsigned char defaultDiffuse, unsigned char defa
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     unsigned char temp3[3] = {defaultEmission, defaultEmission, defaultEmission};
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp3);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp3);
 }
 
 void cube::setTexture(const char* name)
@@ -65,8 +65,8 @@ void cube::setTexture(const char* name)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str()); 
-    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.type, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
+    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str(), true); 
+    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.internalType, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
     glGenerateMipmap(GL_TEXTURE_2D);
     imgLoader.freeData();
 }
@@ -95,8 +95,8 @@ void cube::setEmissionTexture(const char* name)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str()); 
-    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.type, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
+    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str(), true); 
+    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.internalType, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
     glGenerateMipmap(GL_TEXTURE_2D);
     imgLoader.freeData();
 }

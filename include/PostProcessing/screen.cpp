@@ -8,6 +8,7 @@ void screen::setShader(Shader* s)
     shader = s;
     shader->use();
     shader->setInt("screenTexture", 0);
+
     glGenVertexArrays(1, &quadVAO);
     glGenBuffers(1, &quadVBO);
     glBindVertexArray(quadVAO);
@@ -18,21 +19,103 @@ void screen::setShader(Shader* s)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
+
+    glGenFramebuffers(1, &intermediateFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, intermediateFbo);
+    glGenTextures(1, &intermediateColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, intermediateColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, intermediateColorBuffer, 0);
+
+    glGenFramebuffers(1, &pingPongFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, pingPongFbo);
+    glGenTextures(1, &pingPongColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, pingPongColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingPongColorBuffer, 0);
 }
 
 void screen::render()
 {
-    shader->use();
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFbo);
     glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
+
+    glDisable(GL_DEPTH_TEST);
+
+    int currBuffer = intermediateColorBuffer;
+    if(postProcessing[0])
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingPongFbo);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, currBuffer);
+        inversionShader.use();
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        currBuffer = pingPongColorBuffer;
+    }
+    if(postProcessing[1])
+    {
+        if(currBuffer == intermediateColorBuffer) glBindFramebuffer(GL_FRAMEBUFFER, pingPongFbo);
+        else glBindFramebuffer(GL_FRAMEBUFFER, intermediateFbo);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, currBuffer);
+        blackWhiteShader.use();
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        if(currBuffer == intermediateColorBuffer) currBuffer = pingPongColorBuffer;
+        else currBuffer = intermediateColorBuffer;
+    }
+    if(postProcessing[2])
+    {
+        if(currBuffer == intermediateColorBuffer) glBindFramebuffer(GL_FRAMEBUFFER, pingPongFbo);
+        else glBindFramebuffer(GL_FRAMEBUFFER, intermediateFbo);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, currBuffer);
+        sharpenShader.use();
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        if(currBuffer == intermediateColorBuffer) currBuffer = pingPongColorBuffer;
+        else currBuffer = intermediateColorBuffer;
+    }
+    if(postProcessing[3])
+    {
+        if(currBuffer == intermediateColorBuffer) glBindFramebuffer(GL_FRAMEBUFFER, pingPongFbo);
+        else glBindFramebuffer(GL_FRAMEBUFFER, intermediateFbo);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, currBuffer);
+        blurShader.use();
+        glBindVertexArray(quadVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        if(currBuffer == intermediateColorBuffer) currBuffer = pingPongColorBuffer;
+        else currBuffer = intermediateColorBuffer;
+    }
+
+    shader->use();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f); 
     glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, intermediateColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, currBuffer);
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
@@ -53,15 +136,36 @@ void screen::setupAntiAliasing(int samples)
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
-    glGenFramebuffers(1, &intermediateFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, intermediateFbo);
-    glGenTextures(1, &intermediateColorBuffer);
-    glBindTexture(GL_TEXTURE_2D, intermediateColorBuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, intermediateColorBuffer, 0);
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void screen::addInversion()
+{
+    inversionShader = Shader("screenVertex", "inversionFragment");
+    inversionShader.use();
+    inversionShader.setInt("screenTexture", 0);
+    postProcessing[0] = true;
+}
+
+void screen::addBlackWhite()
+{
+    blackWhiteShader = Shader("screenVertex", "blackWhiteFragment");
+    blackWhiteShader.use();
+    blackWhiteShader.setInt("screenTexture", 0);
+    postProcessing[1] = true;
+}
+
+void screen::addSharpen()
+{
+    sharpenShader = Shader("screenVertex", "sharpenFragment");
+    sharpenShader.use();
+    sharpenShader.setInt("screenTexture", 0);
+    postProcessing[2] = true;
+}
+void screen::addBlur()
+{
+    blurShader = Shader("screenVertex", "blurFragment");
+    blurShader.use();
+    blurShader.setInt("screenTexture", 0);
+    postProcessing[3] = true;
 }

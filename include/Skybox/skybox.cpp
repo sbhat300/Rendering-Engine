@@ -19,8 +19,8 @@ void skybox::load(const char* right, const char* left, const char* top, const ch
     tgaLoader imgLoader;
     for(int i = 0; i < 6; i++)
     {
-        imgLoader.load(fileLoader::loadSkybox(*(inp + i), sharedData::windows, "tga").c_str(), false);
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, imgLoader.width, imgLoader.height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgLoader.data);
+        imgLoader.load(fileLoader::loadSkybox(*(inp + i), sharedData::windows, "tga").c_str(), true, false);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, imgLoader.internalType, imgLoader.width, imgLoader.height, 0, GL_RGB, GL_UNSIGNED_BYTE, imgLoader.data);
         imgLoader.freeData();
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
