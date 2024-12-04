@@ -18,7 +18,7 @@ void pointLight::setShader(Shader* s)
 {
     shader = s;
     shader->use();
-    unsigned int matPos = glGetUniformBlockIndex(s->ID, "Matrices");   
+    unsigned int matPos = glGetUniformBlockIndex(s->ID, "matrices");   
     glUniformBlockBinding(s->ID, matPos, 0);
 }
 

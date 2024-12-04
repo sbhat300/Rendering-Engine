@@ -24,7 +24,7 @@ void cube::setShader(Shader* s, unsigned char defaultDiffuse, unsigned char defa
 {
     shader = s;
     shader->use();
-    unsigned int matPos = glGetUniformBlockIndex(shader->ID, "Matrices");   
+    unsigned int matPos = glGetUniformBlockIndex(shader->ID, "matrices");   
     glUniformBlockBinding(shader->ID, matPos, 0);
     shader->setFloat("ambient", setup::ambient);
 

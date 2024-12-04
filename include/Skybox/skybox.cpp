@@ -34,7 +34,7 @@ void skybox::setShader(Shader* s)
 {
     shader = s;
     s->use();
-    unsigned int matPos = glGetUniformBlockIndex(shader->ID, "Matrices");   
+    unsigned int matPos = glGetUniformBlockIndex(shader->ID, "matrices");   
     glUniformBlockBinding(shader->ID, matPos, 0);
     s->setInt("skybox", 0);
 }

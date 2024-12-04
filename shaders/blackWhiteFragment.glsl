@@ -1,13 +1,13 @@
 #version 330 core
-out vec4 FragColor;
+out vec4 fragColor;
   
-in vec2 TexCoords;
+in vec2 texCoords;
 
 uniform sampler2D screenTexture;
 
 void main()
 {
-    FragColor = texture(screenTexture, TexCoords);
-    float average = (FragColor.r + FragColor.g + FragColor.b) / 3.0;
-    FragColor = vec4(average, average, average, 1.0);
+    fragColor = texture(screenTexture, texCoords);
+    float average = (fragColor.r + fragColor.g + fragColor.b) / 3.0;
+    fragColor = vec4(average, average, average, 1.0);
 }  

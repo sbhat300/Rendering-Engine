@@ -100,28 +100,29 @@ int main() {
     sharedData::initCubeVAO();
     sharedData::initSkyboxVAO();
 
+    //setup all necessary shaders here first before anything
     Shader cubeShader("defaultCubeVertex", "defaultCubeFragment");
     Shader lightShader("lightVertex", "lightFragment");
     Shader skyboxShader("skyboxVertex", "skyboxFragment");
     Shader screenShader("screenVertex", "screenFragment");
 
     display.setShader(&screenShader);
-    //Post procssing options
+    //Post procssing options after shader is set
     // display.addInversion();
     // display.addBlackWhite();
     // display.addSharpen();
     // display.addBlur();
+    display.addBloom(10);
+    display.setBloomThreshold(5);
 
-    pointLight temp(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.7f, 1.8f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f));
+    pointLight temp(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.7f, 1.8f, glm::vec3(1.0f, 1.0f, 1.0), glm::vec3(2.0f, 2.0f, 2.0f));
     temp.shouldRender = true;
-    temp.scale = glm::vec3(0.2f, 0.2f, 0.2f);
+    temp.scale = glm::vec3(0.1f, 0.1f, 0.1f);
     temp.setShader(&lightShader);
-    temp.linear = 0.045f;
-    temp.quadratic = 0.0075f;
     lights.pointLights.push_back(temp);
     temp.pos = glm::vec3(1.0f, 0.0f, -3.0f);
-    temp.diffuseColor = glm::vec3(0.0f, 0.5f, 0.5f);
-    temp.specularColor = glm::vec3(0.0f, 1.0f, 1.0f);
+    temp.diffuseColor = glm::vec3(0.0f, 10.0f, 10.0f);
+    temp.specularColor = glm::vec3(0.0f, 20.0f, 20.0f);
     lights.pointLights.push_back(temp);
     directionLight temp2(glm::vec3(-0.2f, -0.5f, 0.0f), glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.2f, 0.2f, 0.2f));
     lights.directionLights.push_back(temp2);
@@ -142,9 +143,9 @@ int main() {
         c[i].scale = glm::vec3(0.5f, 0.5f, 0.5f);
         c[i].shininess = 32;
     }
-    c[0].setShader(&cubeShader, 255, 127, 0);
+    c[0].setShader(&cubeShader, 255, 255, 0);
     c[0].pos = glm::vec3(0, -2, 0);
-    c[0].scale = glm::vec3(10, 1, 10);
+    c[0].scale = glm::vec3(5, 1, 5);
     c[0].shininess = 16;
     c[4].setEmissionTexture("container_emission");
 
@@ -220,6 +221,13 @@ void processInput(GLFWwindow* window)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+        display.setExposure(display.exposure - 0.01f);
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+        display.setExposure(display.exposure + 0.01f);
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+        std::cout << "FPS: " << 1.0f / deltaTime << std::endl;
+    
 }
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {

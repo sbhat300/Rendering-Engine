@@ -7,10 +7,11 @@ class screen
 {
     public:
         int width, height;
-        Shader inversionShader;
         Shader blackWhiteShader;
         Shader sharpenShader;
         Shader blurShader;
+        Shader bloomShader;
+        Shader bloomBlurShader;
         Shader* shader;
         unsigned int quadVAO;
         unsigned int quadVBO;
@@ -21,7 +22,13 @@ class screen
         unsigned int intermediateColorBuffer;
         unsigned int pingPongFbo;
         unsigned int pingPongColorBuffer;
-        bool postProcessing[4]; //0 = inversion, 1 = greyscale, 2 = sharpen, 3 = blur
+        unsigned int bloomFbo;
+        unsigned int bloomColorBuffer;
+        int bloomStrength;
+        bool postProcessing[3]; //0 = greyscale, 1 = sharpen, 2 = blur
+        float exposure;
+        float bloomThreshold;
+        bool bloomEnabled;
         const float quadVertices[24] = {  
         // positions   // texCoords
         -1.0f,  1.0f,  0.0f, 1.0f,
@@ -33,10 +40,12 @@ class screen
         -1.0f,  1.0f,  0.0f, 1.0f
         };	
         void render();
-        void addInversion();
         void addBlackWhite();
         void addSharpen();
         void addBlur();
+        void addBloom(int s);
+        void setExposure(float exp);
+        void setBloomThreshold(float t);
         void setupAntiAliasing(int samples);
         void setShader(Shader* s);
     private:
