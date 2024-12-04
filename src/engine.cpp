@@ -22,6 +22,7 @@
 #include <Skybox/skybox.h>
 #include <vector>
 #include <PostProcessing/screen.h>
+#include <Objects/plane.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -46,6 +47,7 @@ float setup::ambient = 0.00f;
 lightManager lights;
 
 cube c[9];
+plane p;
 
 skybox sky;
 
@@ -99,6 +101,7 @@ int main() {
 
     sharedData::initCubeVAO();
     sharedData::initSkyboxVAO();
+    sharedData::initPlaneVAO();
 
     //setup all necessary shaders here first before anything
     Shader cubeShader("defaultCubeVertex", "defaultCubeFragment");
@@ -149,6 +152,14 @@ int main() {
     c[0].shininess = 16;
     c[4].setEmissionTexture("container_emission");
 
+    p.setShader(&cubeShader);
+    // p.setTexture("container");
+    p.setCol(1, 1, 1);
+    p.pos = glm::vec3(0, 0, 1);
+    p.scale = glm::vec3(1, 1, 1);
+    p.yRot = glm::radians(180.0f);
+    p.shininess = 64;
+
     sky.load("ocean_right", "ocean_left", "ocean_top", "ocean_bottom", "ocean_front", "ocean_back");
     sky.setShader(&skyboxShader);
 
@@ -183,6 +194,9 @@ int main() {
         for(int i = 0; i < lights.pointLights.size(); i++)
             if(lights.pointLights[i].shouldRender) lights.pointLights[i].render();
         for(int i = 0; i < 9; i++) c[i].render();
+        p.render();
+        // p.xRot = glfwGetTime() * 0.5f;
+        c[3].yRot = glfwGetTime() * 0.5f;
 
         display.render();
         

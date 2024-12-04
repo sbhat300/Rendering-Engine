@@ -45,13 +45,13 @@ uniform vec3 col;
 uniform float ambient;
 
 uniform Material material;
-#define MAX_DIR_LIGHTS 10
+#define MAX_DIR_LIGHTS 3
 uniform dirLight dirLights[MAX_DIR_LIGHTS];
 uniform int numDirLights;
-#define MAX_SPOT_LIGHTS 10
+#define MAX_SPOT_LIGHTS 3
 uniform spotLight spotLights[MAX_SPOT_LIGHTS];
 uniform int numSpotLights;
-#define MAX_POINT_LIGHTS 100 
+#define MAX_POINT_LIGHTS 10 
 uniform int numPointLights;
 uniform pointLight pointLights[MAX_POINT_LIGHTS];
 

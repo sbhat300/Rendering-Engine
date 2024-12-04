@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/include/SharedVAO/sharedDa
                                 ${PROJECT_SOURCE_DIR}/include/Camera/flyCam.cpp
                                 ${PROJECT_SOURCE_DIR}/include/TGA/tgaLoader.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Objects/cube.cpp
+                                ${PROJECT_SOURCE_DIR}/include/Objects/plane.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/lightManager.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/pointLight.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/directionLight.cpp
