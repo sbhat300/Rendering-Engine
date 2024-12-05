@@ -15,13 +15,16 @@ add_executable(${PROJECT_NAME}  ${PROJECT_SOURCE_DIR}/include/SharedVAO/sharedDa
                                 ${PROJECT_SOURCE_DIR}/include/TGA/tgaLoader.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Objects/cube.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Objects/plane.cpp
+                                ${PROJECT_SOURCE_DIR}/include/Objects/renderable.cpp
+                                ${PROJECT_SOURCE_DIR}/include/Objects/renderableManager.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/lightManager.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/pointLight.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/directionLight.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Lights/spotLight.cpp
                                 ${PROJECT_SOURCE_DIR}/include/Skybox/skybox.cpp
                                 ${PROJECT_SOURCE_DIR}/include/PostProcessing/screen.cpp
-
+                                ${PROJECT_SOURCE_DIR}/include/ModelLoader/mesh.cpp
+                                ${PROJECT_SOURCE_DIR}/include/ModelLoader/model.cpp
                                 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/include)
@@ -32,6 +35,6 @@ elseif(APPLE)
     if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
         target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/lib/libglfw.3.dylib)
     else()
-        target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/lib/libglfw.3.4.dylib)
+        target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/lib/libglfw.3.4.dylib ${CMAKE_SOURCE_DIR}/lib/libassimp.5.4.3.dylib)
     endif()
 endif()

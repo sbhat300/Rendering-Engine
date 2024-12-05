@@ -3,13 +3,12 @@
 
 #include <glm/glm.hpp>
 #include <Shader/shader.h>
+#include <Objects/renderable.h>
 
-class pointLight
+class pointLight : public renderable
 {
     public:
         bool shouldRender;
-        glm::vec3 pos;
-        glm::vec3 scale;
         Shader* shader;
         float constant, linear, quadratic;
         glm::vec3 diffuseColor, specularColor;

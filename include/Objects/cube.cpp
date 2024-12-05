@@ -54,6 +54,15 @@ void cube::setShader(Shader* s, unsigned char defaultDiffuse, unsigned char defa
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     unsigned char temp3[3] = {defaultEmission, defaultEmission, defaultEmission};
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp3);
+
+    glGenTextures(1, &normalTex);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    float temp4[3] = {0.5f, 0.5f, 1.0f};
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, temp4);
 }
 
 void cube::setTexture(const char* name)
@@ -101,6 +110,21 @@ void cube::setEmissionTexture(const char* name)
     imgLoader.freeData();
 }
 
+void cube::setNormalTexture(const char* name)
+{
+    glDeleteTextures(1, &normalTex);
+    glGenTextures(1, &normalTex);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str(), false, true); 
+    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.type, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    imgLoader.freeData();
+}
+
 void cube::render()
 {
     shader->use();
@@ -113,6 +137,9 @@ void cube::render()
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, emissionTex);
     shader->setInt("material.emission", 2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    shader->setInt("material.normal", 3);
     shader->setFloat("material.shininess", shininess);
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -124,5 +151,21 @@ void cube::render()
     shader->setMat4("model", model);
     shader->setVec3("col", color.x, color.y, color.z);
     glBindVertexArray(sharedData::cubeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    if(!translucent) 
+    {
+        shader->setInt("discardAlpha", 2);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+    else
+    {
+        glDisable(GL_CULL_FACE);
+        glDepthMask(GL_FALSE);
+        shader->setInt("discardAlpha", 1);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDepthMask(GL_TRUE);
+        shader->setInt("discardAlpha", 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glEnable(GL_CULL_FACE);
+    }
 }

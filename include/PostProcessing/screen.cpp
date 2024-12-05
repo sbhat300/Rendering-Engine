@@ -53,6 +53,7 @@ void screen::setShader(Shader* s)
 
 void screen::render()
 {
+    glDisable(GL_BLEND);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFbo);
     glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);

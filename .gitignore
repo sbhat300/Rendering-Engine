@@ -4,8 +4,11 @@ include/KHR
 include/glad/
 include/GLFW/
 lib/libglfw.3.4.dylib
+lib/libassimp.5.dylib
+lib/libassimp.5.4.3.dylib
 include/glm/
 .DS_Store
 lib/libglfw.3.dylib
 lib/libglfw3dll.a
 build/
+include/assimp

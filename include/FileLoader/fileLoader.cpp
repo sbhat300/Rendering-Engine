@@ -16,3 +16,8 @@ std::string fileLoader::loadSkybox(const char* name, bool windows, const char* f
     if(windows) return rootPath + "\\Textures\\Skybox\\" + name + "." + fileType;
     else return rootPath + "/Textures/Skybox/" + name + "." + fileType; 
 }
+std::string fileLoader::loadModel(const char* parent, const char* name, bool windows, const char* fileType)
+{
+    if(windows) return rootPath + "\\models\\" + parent + "\\" + name + "." + fileType;
+    else return rootPath + "/models/" + parent + "/" + name + "." + fileType; 
+}

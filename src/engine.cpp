@@ -23,6 +23,8 @@
 #include <vector>
 #include <PostProcessing/screen.h>
 #include <Objects/plane.h>
+#include <Objects/renderableManager.h>
+#include <ModelLoader/model.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -42,12 +44,16 @@ bool firstMouse = true;
 flyCam cam(glm::vec3(0, 0, 3));
 tgaLoader imgLoader;
 bool sharedData::windows = true;
-float setup::ambient = 0.00f;
+float setup::ambient = 0.05f;
 
 lightManager lights;
 
 cube c[9];
-plane p;
+plane p[3];
+pointLight pointLights[2];
+directionLight dirLights[1];
+spotLight spotLights[1];
+renderableManager objManager(&cam);
 
 skybox sky;
 
@@ -56,14 +62,19 @@ screen display;
 std::string fileLoader::rootPath = ROOT_DIR;
 glm::vec3 cubePositions[] = {
     glm::vec3( 2.0f,  5.0f, -15.0f), 
-    glm::vec3(-1.5f, -2.2f, -2.5f),  
+    glm::vec3(-1.5f, 2.2f, -2.5f),  
     glm::vec3(-3.8f, -2.0f, -12.3f),  
-    glm::vec3( 2.4f, -0.4f, -3.5f),  
+    glm::vec3( 2.4f, 0.0f, -3.5f),  
     glm::vec3(-1.7f,  3.0f, -7.5f),  
-    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( -4.3f, 2.0f, -2.5f),  
     glm::vec3( 1.5f,  2.0f, -2.5f), 
     glm::vec3( 1.5f,  0.2f, -1.5f), 
     glm::vec3(-1.3f,  1.0f, -1.5f),
+};
+glm::vec3 planePosition[3] = {
+    glm::vec3(0.5f, 0, -0.5f),
+    glm::vec3(0, 0.4f, -3.0f),
+    glm::vec3(0.2f, 0.1f, -0.7f)
 };
 
 unsigned int matrixUBO;
@@ -102,6 +113,7 @@ int main() {
     sharedData::initCubeVAO();
     sharedData::initSkyboxVAO();
     sharedData::initPlaneVAO();
+    sharedData::initDefaultTextures();
 
     //setup all necessary shaders here first before anything
     Shader cubeShader("defaultCubeVertex", "defaultCubeFragment");
@@ -111,29 +123,41 @@ int main() {
 
     display.setShader(&screenShader);
     //Post procssing options after shader is set
-    // display.addInversion();
     // display.addBlackWhite();
     // display.addSharpen();
     // display.addBlur();
     display.addBloom(10);
-    display.setBloomThreshold(5);
+    display.setBloomThreshold(3);
 
-    pointLight temp(glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.7f, 1.8f, glm::vec3(1.0f, 1.0f, 1.0), glm::vec3(2.0f, 2.0f, 2.0f));
-    temp.shouldRender = true;
-    temp.scale = glm::vec3(0.1f, 0.1f, 0.1f);
-    temp.setShader(&lightShader);
-    lights.pointLights.push_back(temp);
-    temp.pos = glm::vec3(1.0f, 0.0f, -3.0f);
-    temp.diffuseColor = glm::vec3(0.0f, 10.0f, 10.0f);
-    temp.specularColor = glm::vec3(0.0f, 20.0f, 20.0f);
-    lights.pointLights.push_back(temp);
-    directionLight temp2(glm::vec3(-0.2f, -0.5f, 0.0f), glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.2f, 0.2f, 0.2f));
-    lights.directionLights.push_back(temp2);
-    spotLight temp3( glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f),
+    for(int i = 0; i < 2; i++)
+    {
+        pointLights[i].shouldRender = true;
+        pointLights[i].scale = glm::vec3(0.1f, 0.1f, 0.1f);
+        pointLights[i].constant = 1.0f;
+        pointLights[i].linear = 0.7f;
+        pointLights[i].quadratic = 1.8f;
+        lights.pointLights.push_back(&pointLights[i]);
+        if(pointLights[i].shouldRender) 
+        {
+            pointLights[i].setShader(&lightShader);
+            objManager.addObject(&pointLights[i], false);
+        }
+    }
+    pointLights[0].pos = glm::vec3(0.0f, 0.0f, 1.0f);
+    pointLights[0].diffuseColor = glm::vec3(3.0f, 3.0f, 3.0f);
+    pointLights[0].specularColor = glm::vec3(5.0f, 5.0f, 5.0f);
+    pointLights[1].pos = glm::vec3(1.0f, 0.0f, -3.0f);
+    pointLights[1].diffuseColor = glm::vec3(0.0f, 5.0f, 5.0f);
+    pointLights[1].specularColor = glm::vec3(0.0f, 7.0f, 7.0f);
+
+    dirLights[0] = directionLight(glm::vec3(-0.2f, -0.5f, 0.0f), glm::vec3(0.1f, 0.1f, 0.1f), glm::vec3(0.2f, 0.2f, 0.2f));
+    lights.directionLights.push_back(&dirLights[0]);
+    spotLights[0] = spotLight(glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(1.0f, 1.0f, 1.0f),
                 glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)),
                 glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
                 1.0f, 0.09f, 0.032f);
-    // lights.spotLights.push_back(temp3);
+    // lights.spotLights.push_back(&spotLights[0]);
+
     lights.loadLights(&cubeShader);
 
     
@@ -142,32 +166,52 @@ int main() {
         c[i].setShader(&cubeShader);
         c[i].setTexture("container2");
         c[i].setSpecularTexture("container2_specular");
+        // c[i].setNormalTexture("brickwall_normal");
         c[i].pos = cubePositions[i];
         c[i].scale = glm::vec3(0.5f, 0.5f, 0.5f);
         c[i].shininess = 32;
     }
     c[0].setShader(&cubeShader, 255, 255, 0);
-    c[0].pos = glm::vec3(0, -2, 0);
-    c[0].scale = glm::vec3(5, 1, 5);
+    c[0].pos = glm::vec3(0, -1.6, 0);
+    c[0].scale = glm::vec3(5, 0.2f, 5);
     c[0].shininess = 16;
     c[4].setEmissionTexture("container_emission");
 
-    p.setShader(&cubeShader);
-    // p.setTexture("container");
-    p.setCol(1, 1, 1);
-    p.pos = glm::vec3(0, 0, 1);
-    p.scale = glm::vec3(1, 1, 1);
-    p.yRot = glm::radians(180.0f);
-    p.shininess = 64;
+    for(int i = 0; i < 9; i++) objManager.addObject(&c[i], false);
+
+    for(int i = 0; i < 2; i++)
+    {
+        p[i].setShader(&cubeShader, 255, 127, 0);
+        p[i].setCol(1, 1, 1);
+        p[i].pos = planePosition[i];
+        p[i].scale = glm::vec3(1, 1, 1);
+        // p[i].yRot = glm::radians(180.0f);
+    }
+    p[0].setTexture("brickwall");
+    p[0].setNormalTexture("brickwall_normal");
+    p[0].shininess = 16;
+    objManager.addObject(&p[0], false);
+    p[1].setTexture("window");
+    p[1].shininess = 256;
+    p[1].yRot = glm::radians(90.0f);
+    objManager.addObject(&p[1], true);
 
     sky.load("ocean_right", "ocean_left", "ocean_top", "ocean_bottom", "ocean_front", "ocean_back");
     sky.setShader(&skyboxShader);
+
+    model bag(fileLoader::loadModel("backpack", "backpack", sharedData::windows, "obj"), &cubeShader);
+    bag.pos = glm::vec3(0, 0, -5);
+
+    objManager.addObject(&bag, false);
 
     //UBO must be set after shaders are set
     setUBO();
 
     glEnable(GL_DEPTH_TEST);  
     glEnable(GL_CULL_FACE);  
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+    glBlendEquation(GL_FUNC_ADD);
 
     //anti aliasing
     glEnable(GL_MULTISAMPLE);  
@@ -189,14 +233,17 @@ int main() {
         glBindFramebuffer(GL_FRAMEBUFFER, display.fbo);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);   
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);  
         if(sky.loaded) sky.render();
-        for(int i = 0; i < lights.pointLights.size(); i++)
-            if(lights.pointLights[i].shouldRender) lights.pointLights[i].render();
-        for(int i = 0; i < 9; i++) c[i].render();
-        p.render();
-        // p.xRot = glfwGetTime() * 0.5f;
+        objManager.renderObjects();
+        // for(int i = 0; i < lights.pointLights.size(); i++)
+        //     if(lights.pointLights[i].shouldRender) lights.pointLights[i].render();
+        // for(int i = 0; i < 9; i++) c[i].render();
+        // p.render();
+        p[0].yRot = glfwGetTime() * 0.25f;
         c[3].yRot = glfwGetTime() * 0.5f;
+        c[3].zRot = glfwGetTime() * 0.25f;
 
         display.render();
         

@@ -4,18 +4,16 @@
 #include <glm/glm.hpp>
 #include <Shader/shader.h>
 #include <TGA/tgaLoader.h>
+#include <Objects/renderable.h>
 
-class cube
+class cube : public renderable
 {
     public:
         Shader* shader;
-        glm::vec3 pos;
-        glm::vec3 scale;
-        float xRot, yRot, zRot;
-        glm::vec3 color;
         unsigned int texture;
         unsigned int specTex;
         unsigned int emissionTex;
+        unsigned int normalTex;
         tgaLoader imgLoader;
         float shininess;
         cube(glm::vec3 p = glm::vec3(0, 0, 0), glm::vec3 s = glm::vec3(1, 1, 1), float xr = 0, float yr = 0, float zr = 0);
@@ -25,6 +23,7 @@ class cube
         void setTexture(const char* name);
         void setSpecularTexture(const char* name);
         void setEmissionTexture(const char* name);
+        void setNormalTexture(const char* name);
     private:
 
 };

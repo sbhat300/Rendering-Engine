@@ -4,7 +4,7 @@
 #include <setup.h>
 #include <FileLoader/fileLoader.h>
 
-plane::plane(glm::vec3 p, glm::vec2 s, float xr, float yr, float zr)
+plane::plane(glm::vec3 p, glm::vec3 s, float xr, float yr, float zr)
 {
     pos = p;
     scale = s;
@@ -54,6 +54,15 @@ void plane::setShader(Shader* s, unsigned char defaultDiffuse, unsigned char def
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     unsigned char temp3[3] = {defaultEmission, defaultEmission, defaultEmission};
     glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, temp3);
+
+    glGenTextures(1, &normalTex);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    float temp4[3] = {0.5f, 0.5f, 1.0f};
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_FLOAT, temp4);
 }
 
 void plane::setTexture(const char* name)
@@ -61,8 +70,8 @@ void plane::setTexture(const char* name)
     glDeleteTextures(1, &texture);
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str(), true); 
@@ -101,9 +110,25 @@ void plane::setEmissionTexture(const char* name)
     imgLoader.freeData();
 }
 
+void plane::setNormalTexture(const char* name)
+{
+    glDeleteTextures(1, &normalTex);
+    glGenTextures(1, &normalTex);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    imgLoader.load(fileLoader::loadImg(name, sharedData::windows, "tga").c_str(), false, true); 
+    glTexImage2D(GL_TEXTURE_2D, 0, imgLoader.type, imgLoader.width, imgLoader.height, 0, imgLoader.type, GL_UNSIGNED_BYTE, imgLoader.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    imgLoader.freeData();
+}
+
 void plane::render()
 {
     shader->use();
+    glDisable(GL_CULL_FACE);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     shader->setInt("material.diffuse", 0);
@@ -113,6 +138,9 @@ void plane::render()
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, emissionTex);
     shader->setInt("material.emission", 2);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, normalTex);
+    shader->setInt("material.normal", 3);
     shader->setFloat("material.shininess", shininess);
 
     glm::mat4 model = glm::mat4(1.0f);
@@ -124,5 +152,20 @@ void plane::render()
     shader->setMat4("model", model);
     shader->setVec3("col", color.x, color.y, color.z);
     glBindVertexArray(sharedData::planeVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    
+    if(!translucent) 
+    {
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        shader->setInt("discardAlpha", 2);
+    }
+    else
+    {
+        glDepthMask(GL_FALSE);
+        shader->setInt("discardAlpha", 1);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDepthMask(GL_TRUE);
+        shader->setInt("discardAlpha", 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+    glEnable(GL_CULL_FACE);
 }
